@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -6,11 +6,36 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    let stream: MediaStream | undefined
+
+    navigator.mediaDevices
+      .getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      })
+      .then((mediaStream) => {
+        stream = mediaStream
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+        }
+      })
+      .catch((error) => {
+        console.error('Could not access camera:', error)
+      })
+
+    return () => {
+      stream?.getTracks().forEach((track) => track.stop())
+    }
+  }, [])
 
   return (
     <>
       <section id="center">
         <div className="hero">
+          <video ref={videoRef} className="camera-preview" autoPlay playsInline muted />
           <img src={heroImg} className="base" width="170" height="179" alt="" />
           <img src={reactLogo} className="framework" alt="React logo" />
           <img src={viteLogo} className="vite" alt="Vite logo" />
